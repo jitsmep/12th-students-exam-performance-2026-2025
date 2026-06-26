@@ -1,0 +1,259 @@
+Build a modern full-stack web application called "12th Student Exam Performance Analytics."
+
+Tech Stack:
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- Prisma ORM
+- PostgreSQL
+- Recharts
+- Framer Motion
+
+Authentication:
+- Admin Login
+- Teacher Login
+
+Database Tables:
+
+Students
+- id
+- rollNumber
+- name
+- gender
+- stream
+- section
+- year (2025 or 2026)
+
+Subjects
+- id
+- name
+
+Marks
+- id
+- studentId
+- subjectId
+- marks
+
+Results
+- studentId
+- total
+- percentage
+- grade
+- passOrFail
+- rank
+
+Features:
+
+Dashboard
+- Total Students
+- Pass Percentage
+- Fail Percentage
+- Average Percentage
+- Highest Percentage
+- Lowest Percentage
+- Top Performer
+- Recent Results
+
+Student Management
+- Add Student
+- Edit Student
+- Delete Student
+- Search Students
+- Filter by Year
+- Filter by Stream
+
+Marks Management
+- Enter Marks
+- Edit Marks
+- Auto Calculate Total
+- Auto Calculate Percentage
+- Auto Generate Grade
+
+Grades:
+90-100 = A+
+80-89 = A
+70-79 = B+
+60-69 = B
+50-59 = C
+40-49 = D
+Below 40 = Fail
+
+Charts
+- Subject Average Bar Chart
+- Grade Distribution Pie Chart
+- Pass vs Fail Doughnut Chart
+- Year Comparison Line Chart
+- Stream Comparison Bar Chart
+- Student Performance Trend
+
+Comparison Page
+Compare 2025 vs 2026:
+- Pass Percentage
+- Average Marks
+- Subject-wise Performance
+- Grade Distribution
+- Top 10 Students
+- Overall Improvement
+
+Leaderboard
+- Top 10 Students
+- Highest Percentage
+- Highest Subject Score
+
+Reports
+- Download Student Report Card PDF
+- Download Excel Results
+- Print Report Card
+
+Analytics
+- Identify Weak Subjects
+- Identify Top Performing Subjects
+- Average by Stream
+- Average by Gender
+- Rank Students Automatically
+
+UI
+- Glassmorphism
+- Dark Mode
+- Responsive Design
+- Animated Cards
+- Professional Dashboard
+- Beautiful Charts
+- Modern Sidebar Navigation
+
+Create realistic sample data for:
+- 500 students
+- Years 2025 and 2026
+- Random but realistic marks
+- Auto-generated rankings and statistics
+
+Ensure clean architecture, reusable components, proper validation, and production-ready code.
+
+## Dashboard
+
+The dashboard implementation has been extracted into dedicated source files for better organization and reusability.
+
+- **Data import & helper functions**: `src/lib/dashboard.ts`
+- **React dashboard component**: `src/components/Dashboard.tsx`
+- **Next.js page**: `src/pages/dashboard.tsx`
+- **Glassmorphism styling**: add the `.glass` utility to your Tailwind CSS configuration (e.g., `src/styles/glass.css`).
+
+You can now import and use the component directly in your application. See the linked files for the full code.
+
+
+The dashboard visualises key metrics using **Recharts** and **Framer Motion**. Below is a minimal example of how to import data from the local PostgreSQL database using Prisma and render a simple statistics card.
+
+### 1️⃣ Data Import (Prisma)
+```ts
+import { PrismaClient } from '@prisma/client';
+
+// Initialise Prisma client – connects to the local PostgreSQL instance defined in `prisma/schema.prisma`
+const prisma = new PrismaClient();
+
+// Example helper to fetch aggregated dashboard data
+export async function getDashboardStats() {
+  const totalStudents = await prisma.student.count();
+  const passCount = await prisma.result.count({ where: { passOrFail: 'Pass' } });
+  const failCount = await prisma.result.count({ where: { passOrFail: 'Fail' } });
+  const avgPercentage = await prisma.result.aggregate({
+    _avg: { percentage: true },
+  });
+  const highest = await prisma.result.findFirst({
+    orderBy: { percentage: 'desc' },
+    include: { student: true },
+  });
+  const lowest = await prisma.result.findFirst({
+    orderBy: { percentage: 'asc' },
+    include: { student: true },
+  });
+
+  return {
+    totalStudents,
+    passPercentage: (passCount / totalStudents) * 100,
+    failPercentage: (failCount / totalStudents) * 100,
+    averagePercentage: avgPercentage._avg.percentage ?? 0,
+    highestPercentage: highest?.percentage ?? 0,
+    lowestPercentage: lowest?.percentage ?? 0,
+    topPerformer: highest?.student?.name ?? 'N/A',
+  };
+}
+```
+
+### 2️⃣ React Dashboard Component
+```tsx
+import React, { useEffect, useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { getDashboardStats } from '@/lib/dashboard';
+
+export default function Dashboard() {
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      const data = await getDashboardStats();
+      setStats(data);
+    })();
+  }, []);
+
+  if (!stats) return <p>Loading…</p>;
+
+  const cards = [
+    { label: 'Total Students', value: stats.totalStudents },
+    { label: 'Pass %', value: stats.passPercentage.toFixed(1) + '%' },
+    { label: 'Fail %', value: stats.failPercentage.toFixed(1) + '%' },
+    { label: 'Avg %', value: stats.averagePercentage.toFixed(1) + '%' },
+    { label: 'Highest %', value: stats.highestPercentage + '%' },
+    { label: 'Lowest %', value: stats.lowestPercentage + '%' },
+    { label: 'Top Performer', value: stats.topPerformer },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+      {cards.map((c) => (
+        <motion.div
+          key={c.label}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Card className="p-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg">
+            <h3 className="text-lg font-medium">{c.label}</h3>
+            <p className="text-2xl font-bold mt-2">{c.value}</p>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+```
+
+### 3️⃣ Wire‑up in Next.js Page
+Create a page at `src/pages/dashboard.tsx` that simply renders the component above.
+```tsx
+import Dashboard from '@/components/Dashboard';
+
+export default function DashboardPage() {
+  return (
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Dashboard />
+    </main>
+  );
+}
+```
+
+### 4️⃣ Styling – Glassmorphism & Dark Mode
+Add the following Tailwind utilities to achieve the premium glass look used in the card component:
+```css
+/* tailwind.css */
+@layer utilities {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg;
+  }
+}
+```
+Apply `className="glass"` to any container you want to exhibit the glass effect.
+
+---
+
+With the import snippet and the sample dashboard component above, you can now drop this into your codebase, run `npm run dev`, and immediately see a polished, animated analytics view that pulls live data from the local PostgreSQL database.

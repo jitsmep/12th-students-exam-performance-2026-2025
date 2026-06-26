@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  
+  --color-card: rgba(255, 255, 255, 0.03);
+  --color-card-border: rgba(255, 255, 255, 0.08);
+  --color-card-hover: rgba(255, 255, 255, 0.05);
+
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+
+  --color-sidebar: #09090b;
+  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+@layer base {
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-card border border-card-border backdrop-blur-md shadow-lg rounded-xl transition-all duration-300;
+  }
+  .glass:hover {
+    @apply bg-card-hover border-white/20;
+  }
+  .glass-panel {
+    @apply bg-card border border-card-border backdrop-blur-2xl rounded-2xl;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

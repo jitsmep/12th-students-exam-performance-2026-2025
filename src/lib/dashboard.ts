@@ -32,7 +32,7 @@ export async function getDashboardStats() {
     highestPercentage: highest?.percentage ?? 0,
     lowestPercentage: lowest?.percentage ?? 0,
     topPerformer: highest?.student?.name ?? 'N/A',
-    topStudents: topStudents.map(r => ({
+    topStudents: topStudents.map((r: any) => ({
       name: r.student.name,
       rollNumber: r.student.rollNumber,
       percentage: r.percentage,
